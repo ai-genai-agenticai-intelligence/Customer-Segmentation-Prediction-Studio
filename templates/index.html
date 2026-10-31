@@ -1,103 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Segmentation & Prediction Studio | Enterprise AI</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>Customer Segmentation Studio | Enterprise AI & Clustering</title>
+    <!-- Bootstrap 5.3.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Plotly JS CDN -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
     <style>
         :root {
-            --brand-primary: #1E3A8A;
-            --brand-accent: #2563EB;
+            --brand-primary: #3B82F6;
+            --brand-indigo: #6366F1;
             --brand-gradient: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-            --bg-canvas: #F8FAFC;
+            --card-radius: 14px;
         }
+
+        [data-bs-theme="dark"] {
+            --bg-canvas: #0B0F19;
+            --card-bg: #111827;
+            --card-border: #1F2937;
+            --text-heading: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --navbar-bg: #0F172A;
+            --dossier-bg: linear-gradient(135deg, #132238 0%, #0F172A 100%);
+            --dossier-border: #1E3A8A;
+        }
+
+        [data-bs-theme="light"] {
+            --bg-canvas: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --card-border: #E2E8F0;
+            --text-heading: #0F172A;
+            --text-muted: #64748B;
+            --navbar-bg: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+            --dossier-bg: linear-gradient(135deg, #F0FDF4 0%, #EFF6FF 100%);
+            --dossier-border: #BFDBFE;
+        }
+
         body {
             background-color: var(--bg-canvas);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #0F172A;
-            letter-spacing: -0.01em;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-heading);
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
+
         .navbar-custom {
-            background: var(--brand-gradient);
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
+            background: var(--navbar-bg);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
         }
+
         .card-custom {
-            border: 1px solid #E2E8F0;
-            border-radius: 14px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--card-radius);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-            background-color: #FFFFFF;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-color: var(--card-bg);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         }
+
         .card-custom:hover {
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            border-color: #CBD5E1;
         }
+
+        [data-bs-theme="dark"] .card-custom:hover {
+            border-color: #374151;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
         .metric-card {
-            background: #FFFFFF;
+            background-color: var(--card-bg);
             border-radius: 12px;
             padding: 1.15rem 1.25rem;
-            border-left: 5px solid var(--brand-accent);
-            border-top: 1px solid #F1F5F9;
-            border-right: 1px solid #F1F5F9;
-            border-bottom: 1px solid #F1F5F9;
+            border: 1px solid var(--card-border);
+            border-left: 5px solid var(--brand-primary);
         }
+
         .metric-title {
-            font-size: 0.78rem;
-            color: #64748B;
+            font-size: 0.76rem;
+            color: var(--text-muted);
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
         }
+
         .metric-value {
             font-size: 1.65rem;
             font-weight: 800;
-            color: #0F172A;
             margin-top: 0.2rem;
+            line-height: 1.2;
         }
+
+        .nav-tabs {
+            border-bottom: 2px solid var(--card-border);
+        }
+
         .nav-tabs .nav-link {
-            color: #64748B;
+            color: var(--text-muted);
             font-weight: 600;
-            font-size: 0.93rem;
+            font-size: 0.92rem;
             border: none;
             border-bottom: 3px solid transparent;
-            padding: 0.75rem 1.2rem;
+            padding: 0.75rem 1.15rem;
             transition: all 0.2s ease;
         }
+
         .nav-tabs .nav-link.active {
-            color: var(--brand-accent);
-            border-bottom: 3px solid var(--brand-accent);
+            color: var(--brand-primary);
+            border-bottom: 3px solid var(--brand-primary);
             background-color: transparent;
+            font-weight: 700;
         }
-        .nav-tabs .nav-link:hover:not(.active) {
-            color: #1E293B;
-            border-bottom: 3px solid #CBD5E1;
-        }
+
         .prediction-dossier {
-            background: linear-gradient(135deg, #F0FDF4 0%, #E0F2FE 100%);
-            border: 1px solid #BAE6FD;
+            background: var(--dossier-bg);
+            border: 1px solid var(--dossier-border);
             border-radius: 14px;
             padding: 1.5rem;
             position: relative;
         }
-        .coupon-box {
-            background: #FFFFFF;
-            border: 2px dashed #3B82F6;
+
+        .coupon-code-pill {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px dashed var(--brand-primary);
             border-radius: 8px;
-            padding: 0.6rem 1rem;
+            padding: 0.5rem 0.9rem;
             display: inline-flex;
             align-items: center;
             font-family: monospace;
             font-size: 1.05rem;
-            font-weight: bold;
-            color: #1D4ED8;
+            font-weight: 800;
+            color: var(--brand-primary);
         }
+
+        .drop-zone {
+            border: 2px dashed #94A3B8;
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(241, 245, 249, 0.4);
+        }
+
+        [data-bs-theme="dark"] .drop-zone {
+            background: rgba(30, 41, 59, 0.4);
+            border-color: #475569;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--brand-primary);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .status-pill {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
         .view-btn-group .btn {
             font-size: 0.82rem;
             font-weight: 600;
@@ -108,22 +175,80 @@
 <body>
 
     <!-- Header Navbar -->
-    <nav class="navbar navbar-dark navbar-custom py-3">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3">
         <div class="container-fluid px-4">
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <span class="fs-3 me-2">🛍️</span>
                 <div>
-                    <div class="fw-bold fs-5 leading-tight">Customer Segmentation & Prediction Studio</div>
-                    <div class="small text-white-50" style="font-size: 0.78rem;">Enterprise Machine Learning • K-Means & Hierarchical Models</div>
+                    <div class="fw-bold fs-5 leading-tight">Customer Segmentation Studio</div>
+                    <div class="small text-white-50" style="font-size: 0.76rem;">Enterprise Machine Learning & Behavioral Intelligence</div>
                 </div>
             </a>
-            <div class="d-flex align-items-center gap-2">
-                <a href="/export" class="btn btn-light btn-sm fw-bold shadow-sm" id="global-export-btn">
-                    <i class="bi bi-download me-1 text-primary"></i> Export Full Dataset CSV
+
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <!-- Active Dataset Pill -->
+                <span class="badge bg-light bg-opacity-25 text-white border border-white border-opacity-25 px-3 py-2 small d-none d-md-inline-flex align-items-center" id="active-dataset-badge">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> <span id="active-dataset-name">Mall_Customers.csv (200 rows)</span>
+                </span>
+
+                <!-- Upload CSV Button (Modal Trigger) -->
+                <button class="btn btn-light btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="bi bi-cloud-arrow-up-fill me-1 text-primary"></i> Upload CSV
+                </button>
+
+                <!-- Export CSV Button -->
+                <a href="/export" class="btn btn-outline-light btn-sm fw-semibold" id="global-export-btn" title="Download Full Dataset">
+                    <i class="bi bi-download"></i>
                 </a>
+
+                <!-- Theme Toggle Button -->
+                <button class="btn btn-outline-light btn-sm px-2" id="theme-toggle-btn" title="Toggle Dark/Light Mode">
+                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+                </button>
             </div>
         </div>
     </nav>
+
+    <!-- Upload Dataset Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content card-custom">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold" id="uploadModalLabel">
+                        <i class="bi bi-cloud-arrow-up text-primary me-2"></i> Upload Custom Customer Dataset
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">
+                        Upload any customer or behavioral CSV file. The system will automatically detect all numerical features, generate clusters, and update the interactive dashboards.
+                    </p>
+
+                    <!-- Drag and Drop Area -->
+                    <div class="drop-zone" id="drop-zone">
+                        <i class="bi bi-file-earmark-arrow-up fs-1 text-primary mb-2 d-block"></i>
+                        <h6 class="fw-bold mb-1">Drag and drop your customer CSV here</h6>
+                        <small class="text-muted d-block mb-3">or browse from your computer (Max 16MB)</small>
+                        <input type="file" id="file-input" accept=".csv" class="d-none">
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold px-3" onclick="document.getElementById('file-input').click()">
+                            Browse Files
+                        </button>
+                    </div>
+
+                    <!-- Upload Status & Preview Container -->
+                    <div id="upload-status" class="mt-3" style="display: none;"></div>
+
+                    <!-- Reset to Default Button -->
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Want to use the default dataset?</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="reset-default-btn">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset to Default Mall_Customers.csv
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container-fluid px-4 py-4">
 
@@ -133,60 +258,78 @@
                 <div class="metric-card card-custom">
                     <div class="metric-title">Total Customers</div>
                     <div class="metric-value" id="kpi-total">200</div>
-                    <small class="text-muted">100% Data Quality (0 nulls)</small>
+                    <small class="text-muted" id="kpi-quality">Active Dataset</small>
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="metric-card card-custom" style="border-left-color: #10B981;">
-                    <div class="metric-title">Avg Annual Salary</div>
+                    <div class="metric-title" id="kpi-x-title">Avg Annual Salary</div>
                     <div class="metric-value text-success" id="kpi-salary">$60.6k</div>
-                    <small class="text-muted">Range: $15k — $137k</small>
+                    <small class="text-muted" id="kpi-x-sub">Primary Metric</small>
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="metric-card card-custom" style="border-left-color: #F59E0B;">
-                    <div class="metric-title">Avg Spending Score</div>
+                    <div class="metric-title" id="kpi-y-title">Avg Spending Score</div>
                     <div class="metric-value text-warning" id="kpi-spending">50.2</div>
-                    <small class="text-muted">Scale 1-100</small>
+                    <small class="text-muted" id="kpi-y-sub">Scale 1-100</small>
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="metric-card card-custom" style="border-left-color: #3B82F6;">
-                    <div class="metric-title">Average Age</div>
+                    <div class="metric-title" id="kpi-z-title">Average Age</div>
                     <div class="metric-value text-primary" id="kpi-age">38.8 yrs</div>
-                    <small class="text-muted">Range: 18 — 70 yrs</small>
+                    <small class="text-muted">Demographic Profile</small>
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="metric-card card-custom" style="border-left-color: #8B5CF6;">
                     <div class="metric-title">Clusters (k)</div>
-                    <div class="metric-value text-purple" id="kpi-k">5</div>
-                    <small class="text-muted">Optimal by Elbow & Silhouette</small>
+                    <div class="metric-value" style="color: #8B5CF6;" id="kpi-k">5</div>
+                    <small class="text-muted">Optimal Clusters</small>
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="metric-card card-custom" style="border-left-color: #EC4899;">
                     <div class="metric-title">Silhouette Score</div>
-                    <div class="metric-value" id="kpi-silhouette" style="color: #EC4899;">0.554</div>
-                    <small class="text-muted">Cluster Cohesion & Distance</small>
+                    <div class="metric-value" style="color: #EC4899;" id="kpi-silhouette">0.554</div>
+                    <small class="text-muted">Cluster Quality Metric</small>
                 </div>
             </div>
         </div>
 
-        <!-- Main Layout: Controls Sidebar + Tabs Content -->
+        <!-- Main Workspace -->
         <div class="row g-4">
 
-            <!-- Left Controls Column -->
+            <!-- Left Controls Sidebar -->
             <div class="col-lg-3 col-md-4">
 
-                <!-- Model Configuration Card -->
+                <!-- Feature & Algorithm Selection Card -->
                 <div class="card card-custom p-3 mb-4">
-                    <h6 class="fw-bold mb-3 d-flex align-items-center text-uppercase text-secondary" style="letter-spacing: 0.05em; font-size: 0.8rem;">
-                        <i class="bi bi-sliders2 me-2 text-primary"></i> Algorithm Parameters
+                    <h6 class="fw-bold mb-3 d-flex align-items-center text-uppercase text-secondary" style="letter-spacing: 0.05em; font-size: 0.78rem;">
+                        <i class="bi bi-gear-wide-connected me-2 text-primary"></i> Feature & Model Setup
                     </h6>
 
+                    <!-- Column X Selection -->
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Feature X (Salary / Income)</label>
+                        <select class="form-select form-select-sm" id="select-col-x"></select>
+                    </div>
+
+                    <!-- Column Y Selection -->
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold text-muted">Feature Y (Spending / Metric)</label>
+                        <select class="form-select form-select-sm" id="select-col-y"></select>
+                    </div>
+
+                    <!-- Column Z Selection (For 3D) -->
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold text-muted">Clustering Algorithm</label>
+                        <label class="form-label small fw-semibold text-muted">Feature Z (Age / 3rd Dimension)</label>
+                        <select class="form-select form-select-sm" id="select-col-z"></select>
+                    </div>
+
+                    <div class="border-top pt-3 mb-3">
+                        <label class="form-label small fw-semibold text-muted">Algorithm</label>
                         <select class="form-select form-select-sm" id="algo-select">
                             <option value="kmeans" selected>K-Means Clustering</option>
                             <option value="hierarchical">Hierarchical (Agglomerative)</option>
@@ -212,11 +355,11 @@
                     </div>
 
                     <button class="btn btn-primary btn-sm w-100 fw-bold shadow-sm" id="run-cluster-btn">
-                        <i class="bi bi-arrow-repeat me-1"></i> Update Clusters
+                        <i class="bi bi-play-fill me-1"></i> Re-Calculate Clusters
                     </button>
                 </div>
 
-                <!-- Prediction Switch Card -->
+                <!-- Customer Prediction Simulator Card -->
                 <div class="card card-custom p-3">
                     <div class="form-check form-switch mb-1">
                         <input class="form-check-input" type="checkbox" role="switch" id="toggle-predict-switch">
@@ -224,23 +367,22 @@
                             🔮 Predict for New Customer
                         </label>
                     </div>
-                    <small class="text-muted d-block mb-2" style="font-size: 0.8rem;">
-                        Enter Age, Salary, and Spending Score to predict the customer segment in real-time.
+                    <small class="text-muted d-block mb-2" style="font-size: 0.78rem;">
+                        Enter customer metrics to classify their segment and unlock tailored promotional incentives.
                     </small>
 
-                    <!-- Hidden Input Form -->
                     <div id="predict-form-container" class="pt-3 border-top" style="display: none;">
                         <div class="mb-2">
-                            <label class="form-label small fw-semibold text-muted">Customer Age (Years)</label>
-                            <input type="number" class="form-control form-control-sm" id="input-age" value="32" min="15" max="100">
+                            <label class="form-label small fw-semibold text-muted" id="lbl-input-z">Customer Age</label>
+                            <input type="number" class="form-control form-control-sm" id="input-z" value="32" min="15" max="100">
                         </div>
                         <div class="mb-2">
-                            <label class="form-label small fw-semibold text-muted">Annual Salary / Income ($k)</label>
-                            <input type="number" class="form-control form-control-sm" id="input-salary" value="75" min="10" max="250">
+                            <label class="form-label small fw-semibold text-muted" id="lbl-input-x">Annual Salary ($k)</label>
+                            <input type="number" class="form-control form-control-sm" id="input-x" value="75" min="10" max="300">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold text-muted">Spending Score (1-100)</label>
-                            <input type="number" class="form-control form-control-sm" id="input-spending" value="82" min="1" max="100">
+                            <label class="form-label small fw-semibold text-muted" id="lbl-input-y">Spending Score (1-100)</label>
+                            <input type="number" class="form-control form-control-sm" id="input-y" value="82" min="1" max="100">
                         </div>
                         <button class="btn btn-success btn-sm w-100 fw-bold shadow-sm" id="predict-btn">
                             <i class="bi bi-lightning-charge-fill me-1"></i> Classify Customer Now
@@ -250,14 +392,14 @@
 
             </div>
 
-            <!-- Right Content Area -->
+            <!-- Right Main Content Area -->
             <div class="col-lg-9 col-md-8">
 
-                <!-- Real-Time Customer Dossier (Shown when predicted) -->
+                <!-- Real-Time Customer Dossier Card (Reveals on Prediction) -->
                 <div id="prediction-result-box" class="prediction-dossier mb-4 shadow-sm" style="display: none;">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                                 <span class="badge bg-primary px-3 py-1 fs-6" id="pred-badge-cluster">Cluster 1</span>
                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1" id="pred-tag">High-Value Elite</span>
                                 <span class="badge bg-info-subtle text-info border border-info px-2 py-1" id="pred-ltv">LTV: Very High</span>
@@ -268,21 +410,21 @@
                         <button class="btn-close" id="close-prediction-btn" aria-label="Close"></button>
                     </div>
 
-                    <!-- Marketing Strategy Insights Grid -->
-                    <div class="row g-3 bg-white rounded p-3 mb-3 border">
+                    <!-- Strategy Grid -->
+                    <div class="row g-3 bg-body rounded p-3 mb-3 border">
                         <div class="col-md-4">
                             <div class="small fw-bold text-muted text-uppercase">Recommended Channel</div>
-                            <div class="fw-semibold text-dark small mt-1" id="pred-channel">-</div>
+                            <div class="fw-semibold small mt-1" id="pred-channel">-</div>
                         </div>
                         <div class="col-md-4">
                             <div class="small fw-bold text-muted text-uppercase">Cross-Sell Categories</div>
-                            <div class="fw-semibold text-dark small mt-1" id="pred-categories">-</div>
+                            <div class="fw-semibold small mt-1" id="pred-categories">-</div>
                         </div>
                         <div class="col-md-4">
                             <div class="small fw-bold text-muted text-uppercase">Exclusive Coupon Offer</div>
                             <div class="mt-1 d-flex align-items-center gap-2">
-                                <div class="coupon-box" id="pred-coupon">VIP-ELITE-25</div>
-                                <button class="btn btn-outline-primary btn-sm py-1 px-2" id="copy-coupon-btn" title="Copy to clipboard">
+                                <div class="coupon-code-pill" id="pred-coupon">VIP-ELITE-25</div>
+                                <button class="btn btn-outline-primary btn-sm py-1 px-2" id="copy-coupon-btn" title="Copy code">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
@@ -295,16 +437,16 @@
                         <h6 class="fw-bold text-primary mb-2 small text-uppercase">
                             <i class="bi bi-geo-alt-fill me-1"></i> Data Point Cross-Check: Top 5 Nearest Historical Customers
                         </h6>
-                        <div class="table-responsive bg-white rounded border">
+                        <div class="table-responsive bg-body rounded border">
                             <table class="table table-sm table-hover align-middle mb-0" id="nearest-table">
                                 <thead class="table-light small">
                                     <tr>
                                         <th>Customer ID</th>
                                         <th>Gender</th>
                                         <th>Age</th>
-                                        <th>Annual Income (k$)</th>
-                                        <th>Spending Score</th>
-                                        <th>Assigned Cluster</th>
+                                        <th id="th-near-x">Feature X</th>
+                                        <th id="th-near-y">Feature Y</th>
+                                        <th>Cluster</th>
                                         <th>Euclidean Distance</th>
                                     </tr>
                                 </thead>
@@ -356,23 +498,20 @@
                 <!-- Tab Panes -->
                 <div class="tab-content">
 
-                    <!-- TAB 1: 2D & 3D SCATTER PLOT -->
+                    <!-- TAB 1: 2D & 3D SCATTER -->
                     <div class="tab-pane fade show active" id="tab-scatter">
                         <div class="card card-custom p-3 mb-4">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
                                 <div>
                                     <h5 class="fw-bold mb-0">Customer Behavioral Clusters</h5>
-                                    <small class="text-muted" id="scatter-subtitle">Income vs. Spending Score</small>
+                                    <small class="text-muted" id="scatter-subtitle">Mapping Customer Data Points</small>
                                 </div>
 
-                                <!-- View Toggles: 2D vs 3D, and Gender Filters -->
                                 <div class="d-flex align-items-center gap-2">
-                                    <!-- 2D / 3D Toggle -->
                                     <div class="btn-group view-btn-group" role="group">
                                         <button type="button" class="btn btn-outline-primary active" id="view-2d-btn">2D Scatter</button>
-                                        <button type="button" class="btn btn-outline-primary" id="view-3d-btn">🌐 3D Space (Age)</button>
+                                        <button type="button" class="btn btn-outline-primary" id="view-3d-btn">🌐 3D Space</button>
                                     </div>
-                                    <!-- Gender Filter -->
                                     <select class="form-select form-select-sm w-auto" id="gender-filter-select">
                                         <option value="all" selected>All Genders</option>
                                         <option value="Female">Female Only</option>
@@ -381,18 +520,18 @@
                                 </div>
                             </div>
 
-                            <!-- Plotly Chart Canvas -->
+                            <!-- Plotly Canvas -->
                             <div id="plotly-scatter" style="height: 520px; width: 100%;"></div>
                         </div>
 
-                        <!-- Personas Strategy Cards Grid -->
+                        <!-- Persona Strategy Cards Grid -->
                         <h6 class="fw-bold mb-3 text-secondary text-uppercase small" style="letter-spacing: 0.05em;">
-                            Identified Customer Segments & Profiles
+                            Cluster Profiles & Recommended Strategies
                         </h6>
                         <div class="row g-3" id="personas-summary-grid"></div>
                     </div>
 
-                    <!-- TAB 2: CROSS-CHECK CLUSTER DATA POINTS -->
+                    <!-- TAB 2: CROSS-CHECK DATA POINTS -->
                     <div class="tab-pane fade" id="tab-crosscheck">
                         <div class="card card-custom p-3 mb-4">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
@@ -408,59 +547,49 @@
                                 </div>
                             </div>
 
-                            <!-- Cluster Boundary Cards -->
+                            <!-- Boundary Stat Cards -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-3 col-sm-6">
-                                    <div class="p-3 bg-light rounded border h-100">
-                                        <div class="small fw-bold text-muted">Annual Salary Range</div>
-                                        <div class="h5 fw-bold text-primary mb-0 mt-1" id="filter-salary-range">-</div>
-                                        <small class="text-muted" id="filter-salary-mean">Average: -</small>
+                                    <div class="p-3 bg-body-tertiary rounded border h-100">
+                                        <div class="small fw-bold text-muted" id="lbl-cross-x">Feature X Range</div>
+                                        <div class="h5 fw-bold text-primary mb-0 mt-1" id="filter-x-range">-</div>
+                                        <small class="text-muted" id="filter-x-mean">Average: -</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3 col-sm-6">
-                                    <div class="p-3 bg-light rounded border h-100">
-                                        <div class="small fw-bold text-muted">Spending Score Range</div>
-                                        <div class="h5 fw-bold text-success mb-0 mt-1" id="filter-spending-range">-</div>
-                                        <small class="text-muted" id="filter-spending-mean">Average: -</small>
+                                    <div class="p-3 bg-body-tertiary rounded border h-100">
+                                        <div class="small fw-bold text-muted" id="lbl-cross-y">Feature Y Range</div>
+                                        <div class="h5 fw-bold text-success mb-0 mt-1" id="filter-y-range">-</div>
+                                        <small class="text-muted" id="filter-y-mean">Average: -</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3 col-sm-6">
-                                    <div class="p-3 bg-light rounded border h-100">
-                                        <div class="small fw-bold text-muted">Age Profile</div>
-                                        <div class="h5 fw-bold text-dark mb-0 mt-1" id="filter-age-range">-</div>
-                                        <small class="text-muted" id="filter-age-mean">Average: -</small>
+                                    <div class="p-3 bg-body-tertiary rounded border h-100">
+                                        <div class="small fw-bold text-muted" id="lbl-cross-z">Feature Z Range</div>
+                                        <div class="h5 fw-bold text-dark mb-0 mt-1" id="filter-z-range">-</div>
+                                        <small class="text-muted" id="filter-z-mean">Average: -</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3 col-sm-6">
-                                    <div class="p-3 bg-light rounded border h-100">
-                                        <div class="small fw-bold text-muted">Customer Share & Gender</div>
+                                    <div class="p-3 bg-body-tertiary rounded border h-100">
+                                        <div class="small fw-bold text-muted">Customer Count & Share</div>
                                         <div class="h5 fw-bold text-secondary mb-0 mt-1" id="filter-count">-</div>
                                         <small class="text-muted" id="filter-gender-ratio">Ratio: -</small>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Data Table for this Cluster -->
+                            <!-- Customer Data Points Table -->
                             <div class="table-responsive border rounded" style="max-height: 480px; overflow-y: auto;">
                                 <table class="table table-sm table-striped table-hover align-middle mb-0" id="crosscheck-table">
-                                    <thead class="table-light sticky-top small">
-                                        <tr>
-                                            <th>CustomerID</th>
-                                            <th>Gender</th>
-                                            <th>Age</th>
-                                            <th>Annual Income (k$)</th>
-                                            <th>Spending Score (1-100)</th>
-                                            <th>Cluster</th>
-                                            <th>Persona Name</th>
-                                        </tr>
-                                    </thead>
+                                    <thead class="table-light sticky-top small" id="crosscheck-thead"></thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <!-- TAB 3: ELBOW & SILHOUETTE ANALYSIS -->
+                    <!-- TAB 3: ELBOW & SILHOUETTE -->
                     <div class="tab-pane fade" id="tab-elbow">
                         <div class="card card-custom p-3 mb-4">
                             <h5 class="fw-bold mb-1">📈 Mathematical Cluster Optimization</h5>
@@ -495,7 +624,7 @@
                             <p class="text-muted small mb-3">
                                 Dendrogram illustrates the hierarchical merging tree of customer points. The red horizontal dashed line represents the threshold cutting the tree into your chosen cluster count.
                             </p>
-                            <div class="text-center p-2 bg-light rounded border">
+                            <div class="text-center p-2 bg-body-tertiary rounded border">
                                 <img id="dendrogram-img" src="" alt="Hierarchical Dendrogram" class="img-fluid rounded" style="max-height: 500px;">
                             </div>
                         </div>
@@ -505,7 +634,7 @@
                     <div class="tab-pane fade" id="tab-radar">
                         <div class="card card-custom p-3 mb-4">
                             <h5 class="fw-bold mb-2">🕸️ Multi-Dimensional Cluster Radar Comparison</h5>
-                            <p class="text-muted small mb-3">Compare clusters across 4 normalized metrics: Salary, Spending Score, Age, and Female Proportion.</p>
+                            <p class="text-muted small mb-3">Compare clusters across normalized metrics in a spider radar chart.</p>
                             <div id="plotly-radar" style="height: 480px;"></div>
                         </div>
                     </div>
@@ -523,26 +652,15 @@
                     <div class="tab-pane fade" id="tab-all-data">
                         <div class="card card-custom p-3">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                                <h5 class="fw-bold mb-0">Complete Customer Dataset (200 Records)</h5>
+                                <h5 class="fw-bold mb-0">Complete Dataset Records</h5>
                                 <div class="input-group input-group-sm w-auto">
                                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                    <input type="text" class="form-control" id="search-box" placeholder="Search any column...">
+                                    <input type="text" class="form-control" id="search-box" placeholder="Search any record...">
                                 </div>
                             </div>
                             <div class="table-responsive border rounded" style="max-height: 520px; overflow-y: auto;">
                                 <table class="table table-sm table-hover align-middle mb-0" id="all-data-table">
-                                    <thead class="table-light sticky-top small">
-                                        <tr>
-                                            <th>CustomerID</th>
-                                            <th>Gender</th>
-                                            <th>Age</th>
-                                            <th>Annual Income (k$)</th>
-                                            <th>Spending Score (1-100)</th>
-                                            <th>K-Means Cluster</th>
-                                            <th>Hierarchical Cluster</th>
-                                            <th>Assigned Persona</th>
-                                        </tr>
-                                    </thead>
+                                    <thead class="table-light sticky-top small" id="all-data-thead"></thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -562,16 +680,58 @@
 
     <!-- Application Script -->
     <script>
+        let currentMeta = null;
         let currentData = null;
         let lastPredictedPoint = null;
-        let currentViewMode = "2D"; // "2D" or "3D"
+        let currentViewMode = "2D";
         let currentGenderFilter = "all";
 
         const clusterColors = ["#E11D48", "#2563EB", "#059669", "#D97706", "#7C3AED", "#DB2777", "#4F46E5", "#0D9488", "#EA580C", "#475569"];
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
+            await fetchMeta();
             fetchClusters();
             fetchElbowData();
+
+            // Dark/Light Theme Toggle
+            const themeBtn = document.getElementById("theme-toggle-btn");
+            const themeIcon = document.getElementById("theme-icon");
+            themeBtn.addEventListener("click", () => {
+                const currentTheme = document.documentElement.getAttribute("data-bs-theme");
+                const newTheme = currentTheme === "dark" ? "light" : "dark";
+                document.documentElement.setAttribute("data-bs-theme", newTheme);
+                themeIcon.className = newTheme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-stars-fill";
+                renderScatterPlot();
+            });
+
+            // File Upload Drag & Drop
+            const dropZone = document.getElementById("drop-zone");
+            const fileInput = document.getElementById("file-input");
+
+            ["dragenter", "dragover"].forEach(name => {
+                dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+            });
+            ["dragleave", "drop"].forEach(name => {
+                dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove("dragover"); });
+            });
+            dropZone.addEventListener("drop", (e) => {
+                if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files.length) uploadFile(e.target.files[0]);
+            });
+
+            // Reset Dataset Button
+            document.getElementById("reset-default-btn").addEventListener("click", async () => {
+                const res = await fetch("/api/reset_data", { method: "POST" });
+                const d = await res.json();
+                if (d.success) {
+                    bootstrap.Modal.getInstance(document.getElementById("uploadModal")).hide();
+                    await fetchMeta();
+                    fetchClusters();
+                    fetchElbowData();
+                }
+            });
 
             // Linkage visibility
             document.getElementById("algo-select").addEventListener("change", (e) => {
@@ -584,7 +744,7 @@
                 document.querySelectorAll(".dendro-k-val").forEach(el => el.innerText = e.target.value);
             });
 
-            // Update button
+            // Run Clusters button
             document.getElementById("run-cluster-btn").addEventListener("click", () => {
                 fetchClusters();
             });
@@ -611,7 +771,7 @@
                 const code = document.getElementById("pred-coupon").innerText;
                 navigator.clipboard.writeText(code);
                 const btn = document.getElementById("copy-coupon-btn");
-                btn.innerHTML = '<i class="bi bi-check2"></i>';
+                btn.innerHTML = '<i class="bi bi-check2 text-success"></i>';
                 setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 2000);
             });
 
@@ -620,7 +780,6 @@
                 currentViewMode = "2D";
                 e.target.classList.add("active");
                 document.getElementById("view-3d-btn").classList.remove("active");
-                document.getElementById("scatter-subtitle").innerText = "Annual Income vs. Spending Score";
                 renderScatterPlot();
             });
 
@@ -628,7 +787,6 @@
                 currentViewMode = "3D";
                 e.target.classList.add("active");
                 document.getElementById("view-2d-btn").classList.remove("active");
-                document.getElementById("scatter-subtitle").innerText = "3D Customer Space: Age × Income × Spending Score";
                 renderScatterPlot();
             });
 
@@ -647,7 +805,9 @@
             document.getElementById("export-cluster-btn").addEventListener("click", () => {
                 const val = document.getElementById("cluster-filter-select").value;
                 const k = document.getElementById("k-slider").value;
-                window.location.href = `/export?cluster=${val}&k=${k}`;
+                const colX = document.getElementById("select-col-x").value;
+                const colY = document.getElementById("select-col-y").value;
+                window.location.href = `/export?cluster=${val}&k=${k}&col_x=${encodeURIComponent(colX)}&col_y=${encodeURIComponent(colY)}`;
             });
 
             // Table search filter
@@ -660,28 +820,98 @@
             });
         });
 
+        // Upload custom CSV file to Flask API
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const statusBox = document.getElementById("upload-status");
+            statusBox.style.display = "block";
+            statusBox.innerHTML = '<div class="alert alert-info py-2 small mb-0"><i class="bi bi-hourglass-split me-1"></i> Uploading & parsing dataset...</div>';
+
+            try {
+                const res = await fetch("/api/upload", { method: "POST", body: formData });
+                const d = await res.json();
+                if (d.success) {
+                    statusBox.innerHTML = `<div class="alert alert-success py-2 small mb-0"><i class="bi bi-check-circle-fill me-1"></i> <b>${d.filename}</b> loaded successfully (${d.rows} records)!</div>`;
+                    setTimeout(async () => {
+                        bootstrap.Modal.getInstance(document.getElementById("uploadModal")).hide();
+                        statusBox.style.display = "none";
+                        await fetchMeta();
+                        fetchClusters();
+                        fetchElbowData();
+                    }, 1200);
+                } else {
+                    statusBox.innerHTML = `<div class="alert alert-danger py-2 small mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i> Error: ${d.error}</div>`;
+                }
+            } catch (err) {
+                statusBox.innerHTML = `<div class="alert alert-danger py-2 small mb-0">Upload failed: ${err.message}</div>`;
+            }
+        }
+
+        // Fetch dataset metadata and populate selectors
+        async function fetchMeta() {
+            try {
+                const res = await fetch("/api/meta");
+                const meta = await res.json();
+                currentMeta = meta;
+
+                document.getElementById("active-dataset-name").innerText = `${meta.filename} (${meta.total_rows} rows)`;
+
+                const selX = document.getElementById("select-col-x");
+                const selY = document.getElementById("select-col-y");
+                const selZ = document.getElementById("select-col-z");
+
+                [selX, selY, selZ].forEach(s => s.innerHTML = "");
+
+                meta.numeric_columns.forEach(c => {
+                    selX.appendChild(new Option(c, c, false, c === meta.default_x));
+                    selY.appendChild(new Option(c, c, false, c === meta.default_y));
+                    selZ.appendChild(new Option(c, c, false, c === meta.default_z));
+                });
+
+                // Update input labels
+                document.getElementById("lbl-input-x").innerText = meta.default_x;
+                document.getElementById("lbl-input-y").innerText = meta.default_y;
+                document.getElementById("lbl-input-z").innerText = meta.default_z || "Third Feature";
+
+            } catch (err) {
+                console.error("Error fetching meta:", err);
+            }
+        }
+
         // Fetch clustering results from Flask API
         async function fetchClusters() {
             const algo = document.getElementById("algo-select").value;
             const k = parseInt(document.getElementById("k-slider").value);
             const linkage = document.getElementById("linkage-select").value;
+            const colX = document.getElementById("select-col-x").value;
+            const colY = document.getElementById("select-col-y").value;
+            const colZ = document.getElementById("select-col-z").value;
 
             try {
                 const res = await fetch("/api/cluster", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ algorithm: algo, k: k, linkage: linkage })
+                    body: JSON.stringify({ algorithm: algo, k: k, linkage: linkage, col_x: colX, col_y: colY, col_z: colZ })
                 });
                 const data = await res.json();
                 currentData = data;
 
                 // Update KPIs
                 document.getElementById("kpi-total").innerText = data.total_customers;
-                document.getElementById("kpi-salary").innerText = "$" + data.avg_salary.toFixed(1) + "k";
-                document.getElementById("kpi-spending").innerText = data.avg_spending.toFixed(1);
-                document.getElementById("kpi-age").innerText = data.avg_age.toFixed(1) + " yrs";
+                document.getElementById("kpi-x-title").innerText = `Avg ${colX}`;
+                document.getElementById("kpi-salary").innerText = data.avg_x.toFixed(1);
+                document.getElementById("kpi-y-title").innerText = `Avg ${colY}`;
+                document.getElementById("kpi-spending").innerText = data.avg_y.toFixed(1);
+                document.getElementById("kpi-z-title").innerText = `Avg ${colZ}`;
+                document.getElementById("kpi-age").innerText = data.avg_z.toFixed(1);
                 document.getElementById("kpi-k").innerText = data.k;
                 document.getElementById("kpi-silhouette").innerText = data.silhouette.toFixed(3);
+
+                // Update Nearest Table Headers
+                document.getElementById("th-near-x").innerText = colX;
+                document.getElementById("th-near-y").innerText = colY;
 
                 // Populate cluster filter dropdown
                 const filterSelect = document.getElementById("cluster-filter-select");
@@ -702,7 +932,7 @@
                 renderRadarPlot(data.radar);
 
                 // Update Dendrogram image
-                document.getElementById("dendrogram-img").src = `/api/dendrogram?k=${k}&linkage=${linkage}&t=${new Date().getTime()}`;
+                document.getElementById("dendrogram-img").src = `/api/dendrogram?k=${k}&linkage=${linkage}&col_x=${encodeURIComponent(colX)}&col_y=${encodeURIComponent(colY)}&t=${new Date().getTime()}`;
 
             } catch (err) {
                 console.error("Error fetching cluster data:", err);
@@ -711,9 +941,15 @@
 
         // Fetch Elbow & Silhouette precomputed data
         async function fetchElbowData() {
+            const colX = document.getElementById("select-col-x").value;
+            const colY = document.getElementById("select-col-y").value;
+
             try {
-                const res = await fetch("/api/elbow");
+                const res = await fetch(`/api/elbow?col_x=${encodeURIComponent(colX)}&col_y=${encodeURIComponent(colY)}`);
                 const data = await res.json();
+
+                const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+                const themeTemplate = isDark ? "plotly_dark" : "plotly_white";
 
                 // Plot Elbow
                 const traceElbow = {
@@ -729,7 +965,7 @@
                     xaxis: { title: "Number of Clusters (k)" },
                     yaxis: { title: "Inertia (WCSS)" },
                     margin: { l: 50, r: 20, t: 40, b: 40 },
-                    template: "plotly_white"
+                    template: themeTemplate
                 };
                 Plotly.newPlot("plotly-elbow", [traceElbow], layoutElbow, { responsive: true, displayModeBar: false });
 
@@ -747,7 +983,7 @@
                     xaxis: { title: "Number of Clusters (k)" },
                     yaxis: { title: "Silhouette Score" },
                     margin: { l: 50, r: 20, t: 40, b: 40 },
-                    template: "plotly_white"
+                    template: themeTemplate
                 };
                 Plotly.newPlot("plotly-silhouette", [traceSil], layoutSil, { responsive: true, displayModeBar: false });
 
@@ -760,6 +996,12 @@
         function renderScatterPlot() {
             if (!currentData) return;
 
+            const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+            const themeTemplate = isDark ? "plotly_dark" : "plotly_white";
+            const colX = currentData.col_x;
+            const colY = currentData.col_y;
+            const colZ = currentData.col_z;
+
             let filteredDataset = currentData.data;
             if (currentGenderFilter !== "all") {
                 filteredDataset = filteredDataset.filter(d => (d.Genre || d.Gender) === currentGenderFilter);
@@ -768,21 +1010,20 @@
             const traces = [];
 
             if (currentViewMode === "2D") {
-                // 2D Mode
                 for (let i = 0; i < currentData.k; i++) {
                     const clusterPts = filteredDataset.filter(d => d.Cluster === i);
                     traces.push({
-                        x: clusterPts.map(d => d["Annual Income (k$)"]),
-                        y: clusterPts.map(d => d["Spending Score (1-100)"]),
+                        x: clusterPts.map(d => d[colX]),
+                        y: clusterPts.map(d => d[colY]),
                         mode: "markers",
                         type: "scatter",
                         name: currentData.personas[i].name.split("/")[0].trim(),
                         marker: {
                             size: 9,
                             color: clusterColors[i % clusterColors.length],
-                            opacity: 0.82
+                            opacity: 0.85
                         },
-                        text: clusterPts.map(d => `ID: ${d.CustomerID}<br>Gender: ${d.Genre || d.Gender}<br>Age: ${d.Age}<br>Salary: $${d["Annual Income (k$)"]}k<br>Spending: ${d["Spending Score (1-100)"]}`),
+                        text: clusterPts.map(d => `${colX}: ${d[colX]}<br>${colY}: ${d[colY]}<br>Cluster: ${i}`),
                         hoverinfo: "text"
                     });
                 }
@@ -805,11 +1046,10 @@
                     hoverinfo: "none"
                 });
 
-                // New customer prediction point
                 if (lastPredictedPoint) {
                     traces.push({
-                        x: [lastPredictedPoint.salary],
-                        y: [lastPredictedPoint.spending],
+                        x: [lastPredictedPoint.x],
+                        y: [lastPredictedPoint.y],
                         mode: "markers+text",
                         type: "scatter",
                         name: "✨ NEW CUSTOMER",
@@ -826,23 +1066,23 @@
 
                 const layout2D = {
                     margin: { l: 40, r: 20, t: 20, b: 60 },
-                    xaxis: { title: "Annual Income (k$)", gridcolor: "#F1F5F9" },
-                    yaxis: { title: "Spending Score (1-100)", gridcolor: "#F1F5F9" },
+                    xaxis: { title: colX, gridcolor: isDark ? "#1F2937" : "#F1F5F9" },
+                    yaxis: { title: colY, gridcolor: isDark ? "#1F2937" : "#F1F5F9" },
                     legend: { orientation: "h", y: -0.22, x: 0.5, xanchor: "center" },
-                    plot_bgcolor: "#FFFFFF",
-                    paper_bgcolor: "#FFFFFF"
+                    plot_bgcolor: isDark ? "#111827" : "#FFFFFF",
+                    paper_bgcolor: isDark ? "#111827" : "#FFFFFF",
+                    template: themeTemplate
                 };
 
                 Plotly.newPlot("plotly-scatter", traces, layout2D, { responsive: true, displayModeBar: false });
 
             } else {
-                // 3D Mode: Age x Income x Spending
                 for (let i = 0; i < currentData.k; i++) {
                     const clusterPts = filteredDataset.filter(d => d.Cluster === i);
                     traces.push({
-                        x: clusterPts.map(d => d["Annual Income (k$)"]),
-                        y: clusterPts.map(d => d["Spending Score (1-100)"]),
-                        z: clusterPts.map(d => d.Age),
+                        x: clusterPts.map(d => d[colX]),
+                        y: clusterPts.map(d => d[colY]),
+                        z: clusterPts.map(d => d[colZ]),
                         mode: "markers",
                         type: "scatter3d",
                         name: currentData.personas[i].name.split("/")[0].trim(),
@@ -851,16 +1091,16 @@
                             color: clusterColors[i % clusterColors.length],
                             opacity: 0.85
                         },
-                        text: clusterPts.map(d => `ID: ${d.CustomerID}<br>Age: ${d.Age}<br>Salary: $${d["Annual Income (k$)"]}k<br>Score: ${d["Spending Score (1-100)"]}`),
+                        text: clusterPts.map(d => `${colX}: ${d[colX]}<br>${colY}: ${d[colY]}<br>${colZ}: ${d[colZ]}`),
                         hoverinfo: "text"
                     });
                 }
 
                 if (lastPredictedPoint) {
                     traces.push({
-                        x: [lastPredictedPoint.salary],
-                        y: [lastPredictedPoint.spending],
-                        z: [lastPredictedPoint.age],
+                        x: [lastPredictedPoint.x],
+                        y: [lastPredictedPoint.y],
+                        z: [lastPredictedPoint.z],
                         mode: "markers+text",
                         type: "scatter3d",
                         name: "✨ NEW CUSTOMER",
@@ -872,11 +1112,13 @@
                 const layout3D = {
                     margin: { l: 0, r: 0, t: 0, b: 0 },
                     scene: {
-                        xaxis: { title: "Income (k$)" },
-                        yaxis: { title: "Spending" },
-                        zaxis: { title: "Age" }
+                        xaxis: { title: colX },
+                        yaxis: { title: colY },
+                        zaxis: { title: colZ }
                     },
-                    legend: { orientation: "h", y: 0.05, x: 0.5, xanchor: "center" }
+                    legend: { orientation: "h", y: 0.05, x: 0.5, xanchor: "center" },
+                    paper_bgcolor: isDark ? "#111827" : "#FFFFFF",
+                    template: themeTemplate
                 };
 
                 Plotly.newPlot("plotly-scatter", traces, layout3D, { responsive: true, displayModeBar: false });
@@ -899,13 +1141,13 @@
                     <div class="card card-custom p-3 h-100">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="badge" style="background-color: ${clusterColors[i % clusterColors.length]}">Cluster ${i}</span>
-                            <span class="badge bg-light text-dark border">${count} customers (${pct}%)</span>
+                            <span class="badge bg-body-tertiary text-body border">${count} customers (${pct}%)</span>
                         </div>
                         <h6 class="fw-bold mb-1">${p.name}</h6>
                         <div class="text-muted small mb-2">${p.desc}</div>
                         <div class="small fw-semibold text-primary mb-1"><i class="bi bi-tag-fill me-1"></i> ${p.discount}</div>
                         <div class="small mt-auto pt-2 border-top text-secondary">
-                            Centroid: Salary $${currentData.centroids[i][0].toFixed(1)}k • Score ${currentData.centroids[i][1].toFixed(1)}
+                            Centroid: ${currentData.col_x}: ${currentData.centroids[i][0].toFixed(1)} • ${currentData.col_y}: ${currentData.centroids[i][1].toFixed(1)}
                         </div>
                     </div>
                 `;
@@ -917,57 +1159,60 @@
         function renderCrossCheckData(clusterVal) {
             if (!currentData) return;
 
+            const colX = currentData.col_x;
+            const colY = currentData.col_y;
+            const colZ = currentData.col_z;
+
+            document.getElementById("lbl-cross-x").innerText = `${colX} Range`;
+            document.getElementById("lbl-cross-y").innerText = `${colY} Range`;
+            document.getElementById("lbl-cross-z").innerText = `${colZ} Range`;
+
             let filtered = currentData.data;
             if (clusterVal !== "all") {
                 const cNum = parseInt(clusterVal);
                 filtered = currentData.data.filter(d => d.Cluster === cNum);
             }
 
-            const salaries = filtered.map(d => d["Annual Income (k$)"]);
-            const spendings = filtered.map(d => d["Spending Score (1-100)"]);
-            const ages = filtered.map(d => d.Age);
+            const valsX = filtered.map(d => d[colX]).filter(v => typeof v === "number");
+            const valsY = filtered.map(d => d[colY]).filter(v => typeof v === "number");
+            const valsZ = filtered.map(d => d[colZ]).filter(v => typeof v === "number");
 
-            const minSal = Math.min(...salaries);
-            const maxSal = Math.max(...salaries);
-            const meanSal = (salaries.reduce((a, b) => a + b, 0) / salaries.length).toFixed(1);
+            const minX = Math.min(...valsX);
+            const maxX = Math.max(...valsX);
+            const meanX = (valsX.reduce((a, b) => a + b, 0) / valsX.length).toFixed(1);
 
-            const minSp = Math.min(...spendings);
-            const maxSp = Math.max(...spendings);
-            const meanSp = (spendings.reduce((a, b) => a + b, 0) / spendings.length).toFixed(1);
+            const minY = Math.min(...valsY);
+            const maxY = Math.max(...valsY);
+            const meanY = (valsY.reduce((a, b) => a + b, 0) / valsY.length).toFixed(1);
 
-            const minAge = Math.min(...ages);
-            const maxAge = Math.max(...ages);
-            const meanAge = (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1);
+            const minZ = valsZ.length ? Math.min(...valsZ) : 0;
+            const maxZ = valsZ.length ? Math.max(...valsZ) : 0;
+            const meanZ = valsZ.length ? (valsZ.reduce((a, b) => a + b, 0) / valsZ.length).toFixed(1) : 0;
 
-            const femaleCount = filtered.filter(d => (d.Genre || d.Gender) === "Female").length;
-            const femalePct = ((femaleCount / filtered.length) * 100).toFixed(0);
+            document.getElementById("filter-x-range").innerText = `${minX} — ${maxX}`;
+            document.getElementById("filter-x-mean").innerText = `Average: ${meanX}`;
 
-            document.getElementById("filter-salary-range").innerText = `$${minSal}k — $${maxSal}k`;
-            document.getElementById("filter-salary-mean").innerText = `Average: $${meanSal}k`;
+            document.getElementById("filter-y-range").innerText = `${minY} — ${maxY}`;
+            document.getElementById("filter-y-mean").innerText = `Average: ${meanY}`;
 
-            document.getElementById("filter-spending-range").innerText = `${minSp} — ${maxSp}`;
-            document.getElementById("filter-spending-mean").innerText = `Average: ${meanSp}`;
-
-            document.getElementById("filter-age-range").innerText = `${minAge} — ${maxAge} yrs`;
-            document.getElementById("filter-age-mean").innerText = `Average: ${meanAge} yrs`;
+            document.getElementById("filter-z-range").innerText = `${minZ} — ${maxZ}`;
+            document.getElementById("filter-z-mean").innerText = `Average: ${meanZ}`;
 
             document.getElementById("filter-count").innerText = `${filtered.length} Customers`;
-            document.getElementById("filter-gender-ratio").innerText = `Gender: ${femalePct}% F / ${100 - femalePct}% M`;
+            document.getElementById("filter-gender-ratio").innerText = `Cluster Share: ${((filtered.length/currentData.total_customers)*100).toFixed(1)}%`;
+
+            // Build dynamic headers
+            const thead = document.getElementById("crosscheck-thead");
+            const colsToShow = Object.keys(filtered[0] || {}).slice(0, 7);
+            thead.innerHTML = `<tr>${colsToShow.map(c => `<th>${c}</th>`).join("")}<th>Assigned Persona</th></tr>`;
 
             // Populate Table
             const tbody = document.querySelector("#crosscheck-table tbody");
             tbody.innerHTML = "";
             filtered.forEach(d => {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td class="fw-semibold">${d.CustomerID}</td>
-                    <td>${d.Genre || d.Gender}</td>
-                    <td>${d.Age}</td>
-                    <td>$${d["Annual Income (k$)"]}k</td>
-                    <td>${d["Spending Score (1-100)"]}</td>
-                    <td><span class="badge" style="background-color: ${clusterColors[d.Cluster % clusterColors.length]}">Cluster ${d.Cluster}</span></td>
-                    <td class="small fw-semibold">${currentData.personas[d.Cluster].name.split("/")[0]}</td>
-                `;
+                tr.innerHTML = `${colsToShow.map(c => `<td>${d[c]}</td>`).join("")}
+                    <td class="small fw-semibold">${currentData.personas[d.Cluster]?.name.split("/")[0] || "Cluster " + d.Cluster}</td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -976,11 +1221,14 @@
         function renderRadarPlot(radarMetrics) {
             if (!radarMetrics) return;
 
-            const categories = ["Annual Salary ($k)", "Spending Score", "Average Age", "Female %"];
+            const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+            const themeTemplate = isDark ? "plotly_dark" : "plotly_white";
+
+            const categories = [currentData.col_x, currentData.col_y, currentData.col_z, "Female %"];
             const traces = radarMetrics.map((r, i) => {
                 return {
                     type: "scatterpolar",
-                    r: [r.avg_salary, r.avg_spending, r.avg_age, r.female_ratio],
+                    r: [r.avg_x, r.avg_y, r.avg_z, r.female_ratio],
                     theta: categories,
                     fill: "toself",
                     name: `Cluster ${r.cluster}: ${r.name}`,
@@ -990,10 +1238,11 @@
 
             const layout = {
                 polar: {
-                    radialaxis: { visible: true, range: [0, 100] }
+                    radialaxis: { visible: true }
                 },
                 margin: { l: 40, r: 40, t: 20, b: 40 },
-                legend: { orientation: "h", y: -0.15, x: 0.5, xanchor: "center" }
+                legend: { orientation: "h", y: -0.15, x: 0.5, xanchor: "center" },
+                template: themeTemplate
             };
 
             Plotly.newPlot("plotly-radar", traces, layout, { responsive: true, displayModeBar: false });
@@ -1027,43 +1276,46 @@
 
         // Render Full Customer Table
         function renderAllDataTable() {
-            if (!currentData) return;
+            if (!currentData || !currentData.data.length) return;
+
+            const thead = document.getElementById("all-data-thead");
+            const colsToShow = Object.keys(currentData.data[0]).slice(0, 8);
+            thead.innerHTML = `<tr>${colsToShow.map(c => `<th>${c}</th>`).join("")}</tr>`;
+
             const tbody = document.querySelector("#all-data-table tbody");
             tbody.innerHTML = "";
             currentData.data.forEach(d => {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td class="fw-semibold">${d.CustomerID}</td>
-                    <td>${d.Genre || d.Gender}</td>
-                    <td>${d.Age}</td>
-                    <td>$${d["Annual Income (k$)"]}k</td>
-                    <td>${d["Spending Score (1-100)"]}</td>
-                    <td><span class="badge bg-primary">C${d.KMeans_Cluster}</span></td>
-                    <td><span class="badge bg-secondary">C${d.Hierarchical_Cluster}</span></td>
-                    <td class="small fw-semibold">${currentData.personas[d.Cluster].name}</td>
-                `;
+                tr.innerHTML = colsToShow.map(c => `<td>${d[c]}</td>`).join("");
                 tbody.appendChild(tr);
             });
         }
 
         // Run Prediction API call
         async function runPrediction() {
-            const age = parseFloat(document.getElementById("input-age").value);
-            const salary = parseFloat(document.getElementById("input-salary").value);
-            const spending = parseFloat(document.getElementById("input-spending").value);
+            const valZ = parseFloat(document.getElementById("input-z").value);
+            const valX = parseFloat(document.getElementById("input-x").value);
+            const valY = parseFloat(document.getElementById("input-y").value);
             const algo = document.getElementById("algo-select").value;
             const k = parseInt(document.getElementById("k-slider").value);
             const linkage = document.getElementById("linkage-select").value;
+            const colX = document.getElementById("select-col-x").value;
+            const colY = document.getElementById("select-col-y").value;
+            const colZ = document.getElementById("select-col-z").value;
 
             try {
                 const res = await fetch("/api/predict", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ age, salary, spending, algorithm: algo, k, linkage })
+                    body: JSON.stringify({
+                        val_x: valX, val_y: valY, val_z: valZ,
+                        algorithm: algo, k, linkage,
+                        col_x: colX, col_y: colY, col_z: colZ
+                    })
                 });
                 const pred = await res.json();
 
-                lastPredictedPoint = { salary, spending, age, cluster: pred.predicted_cluster };
+                lastPredictedPoint = { x: valX, y: valY, z: valZ, cluster: pred.predicted_cluster };
 
                 // Show Dossier
                 document.getElementById("prediction-result-box").style.display = "block";
@@ -1083,11 +1335,11 @@
                 pred.nearest_customers.forEach(c => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                        <td class="fw-semibold">${c.CustomerID}</td>
-                        <td>${c.Genre || c.Gender}</td>
-                        <td>${c.Age}</td>
-                        <td>$${c["Annual Income (k$)"]}k</td>
-                        <td>${c["Spending Score (1-100)"]}</td>
+                        <td class="fw-semibold">${c.CustomerID || "-"}</td>
+                        <td>${c.Genre || c.Gender || "-"}</td>
+                        <td>${c.Age || c[colZ] || "-"}</td>
+                        <td>${c[colX]}</td>
+                        <td>${c[colY]}</td>
                         <td><span class="badge" style="background-color: ${clusterColors[c.Cluster % clusterColors.length]}">Cluster ${c.Cluster}</span></td>
                         <td class="fw-bold text-primary">${c.distance.toFixed(2)}</td>
                     `;

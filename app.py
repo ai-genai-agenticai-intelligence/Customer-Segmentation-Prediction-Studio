@@ -16,89 +16,115 @@ import matplotlib.pyplot as plt
 # Flask Initialization
 # ---------------------------------------------------------
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max upload
 
-# Data loading
-DATASET_PATH = os.path.join(os.path.dirname(__file__), "Mall_Customers.csv")
-if not os.path.exists(DATASET_PATH):
-    raise FileNotFoundError(f"Dataset not found at {DATASET_PATH}")
+# Default dataset path
+DEFAULT_DATASET_PATH = os.path.join(os.path.dirname(__file__), "Mall_Customers.csv")
+if not os.path.exists(DEFAULT_DATASET_PATH):
+    raise FileNotFoundError(f"Default dataset not found at {DEFAULT_DATASET_PATH}")
 
-df_raw = pd.read_csv(DATASET_PATH)
-
-# Feature Columns
-COL_X = "Annual Income (k$)"
-COL_Y = "Spending Score (1-100)"
-COL_Z = "Age"
-GENDER_COL = "Genre" if "Genre" in df_raw.columns else ("Gender" if "Gender" in df_raw.columns else None)
+# In-memory active dataset storage
+CURRENT_DATASET = {
+    "df": pd.read_csv(DEFAULT_DATASET_PATH),
+    "filename": "Mall_Customers.csv",
+    "is_custom": False,
+}
 
 # ---------------------------------------------------------
-# Persona Assignment Logic & Actionable Strategy
+# Helper Functions
 # ---------------------------------------------------------
-def get_cluster_persona(cluster_idx, centroids_df):
-    income_val = centroids_df.loc[cluster_idx, COL_X]
-    spending_val = centroids_df.loc[cluster_idx, COL_Y]
+def get_numeric_columns(df):
+    """Return numeric columns, excluding ID-like columns if possible."""
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    filtered = [col for col in numeric_cols if "id" not in col.lower()]
+    return filtered if len(filtered) >= 2 else numeric_cols
 
-    med_income = centroids_df[COL_X].median()
-    med_spending = centroids_df[COL_Y].median()
+def get_gender_column(df):
+    for col in ["Genre", "Gender", "gender", "sex", "Sex"]:
+        if col in df.columns:
+            return col
+    return None
 
-    if income_val > med_income and spending_val > med_spending:
-        return {
-            "name": "💎 VIP / High Earners, High Spenders",
-            "tag": "High-Value Elite",
-            "badge_color": "danger",
-            "desc": "Prime target for luxury goods, personal shopper concierge, and exclusive VIP fashion galas.",
-            "ltv": "Very High (Tier 1)",
-            "channel": "Personalized WhatsApp Concierge & Private Preview Emails",
-            "categories": ["Designer Fashion", "Fine Jewelry", "Luxury Watches", "Gourmet Dining"],
-            "coupon": "VIP-ELITE-25",
-            "discount": "25% Off Luxury Collection + Free Valet Parking"
-        }
-    elif income_val < med_income and spending_val > med_spending:
-        return {
-            "name": "🛍️ Trendsetters / Low Income, High Spenders",
-            "tag": "Aspirational Youth",
-            "badge_color": "warning",
-            "desc": "Youthful & impulsive spenders attracted by trendy fast-fashion, pop-up stores, and social buzz.",
-            "ltv": "High Potential (Tier 2)",
-            "channel": "Instagram / TikTok Ads, Mobile Push Alerts & Influencer Collabs",
-            "categories": ["Streetwear", "Sneakers", "Cosmetics", "Trendy Cafes & Bubble Tea"],
-            "coupon": "TRENDY-DROP-15",
-            "discount": "15% Off New Season Arrivals + Buy Now Pay Later Perk"
-        }
-    elif income_val > med_income and spending_val < med_spending:
-        return {
-            "name": "🛡️ Savers / High Income, Low Spenders",
-            "tag": "Pragmatic Affluent",
-            "badge_color": "info",
-            "desc": "Financially comfortable customers who evaluate purchases carefully and demand long-term durability.",
-            "ltv": "Medium-High (Tier 2)",
-            "channel": "In-depth Quality Catalogs, Weekend Newsletter & Loyalty Points",
-            "categories": ["Home Appliances", "Electronics", "High-End Essentials", "Automotive"],
-            "coupon": "SAVER-PRIME-10",
-            "discount": "10% Cashback + Extended 3-Year Free Warranty"
-        }
-    elif income_val < med_income and spending_val < med_spending:
-        return {
-            "name": "🏷️ Budget Shoppers / Low Income, Low Spenders",
-            "tag": "Frugal Economizer",
-            "badge_color": "secondary",
-            "desc": "Price-sensitive shoppers motivated by extreme value, clearance sales, and volume discount bundles.",
-            "ltv": "Moderate (Tier 3)",
-            "channel": "SMS Flash Sales, Weekly Circulars & App Coupons",
-            "categories": ["Clearance Apparel", "Value Grocery Packs", "Everyday Basics"],
-            "coupon": "BUDGET-BOOST-5",
-            "discount": "Buy 1 Get 1 Free on Select Everyday Essentials"
-        }
+def get_cluster_persona(cluster_idx, centroids_df, col_x, col_y):
+    """Generate dynamic business personas and strategies."""
+    income_val = centroids_df.loc[cluster_idx, col_x]
+    spending_val = centroids_df.loc[cluster_idx, col_y]
+
+    med_income = centroids_df[col_x].median()
+    med_spending = centroids_df[col_y].median()
+
+    if "income" in col_x.lower() or "salary" in col_x.lower() or "spending" in col_y.lower() or "score" in col_y.lower():
+        if income_val >= med_income and spending_val >= med_spending:
+            return {
+                "name": "💎 VIP / High Earners, High Spenders",
+                "tag": "High-Value Elite",
+                "badge_color": "#EC4899",
+                "desc": "Prime target for luxury items, exclusive designer previews, and personal concierge service.",
+                "ltv": "Very High (Tier 1)",
+                "channel": "WhatsApp VIP Concierge & Private Invitations",
+                "categories": ["Designer Fashion", "Fine Jewelry", "Luxury Watches", "Gourmet Dining"],
+                "coupon": "VIP-ELITE-25",
+                "discount": "25% Off Luxury Collection + Valet Parking"
+            }
+        elif income_val < med_income and spending_val >= med_spending:
+            return {
+                "name": "🛍️ Trendsetters / Low Income, High Spenders",
+                "tag": "Aspirational Youth",
+                "badge_color": "#F59E0B",
+                "desc": "Trendy, young & spontaneous spenders motivated by seasonal drops, fashion pop-ups, and social buzz.",
+                "ltv": "High Potential (Tier 2)",
+                "channel": "Instagram / TikTok Ads & Mobile Push Notifications",
+                "categories": ["Streetwear", "Sneakers", "Cosmetics", "Trendy Cafes"],
+                "coupon": "TRENDY-DROP-15",
+                "discount": "15% Off New Season + Buy Now Pay Later"
+            }
+        elif income_val >= med_income and spending_val < med_spending:
+            return {
+                "name": "🛡️ Savers / High Income, Low Spenders",
+                "tag": "Pragmatic Affluent",
+                "badge_color": "#06B6D4",
+                "desc": "Financially secure shoppers who evaluate purchases carefully and demand maximum quality & durability.",
+                "ltv": "Medium-High (Tier 2)",
+                "channel": "Quality Product Catalogs & Weekend Newsletters",
+                "categories": ["Home Appliances", "Electronics", "High-End Basics", "Automotive"],
+                "coupon": "SAVER-PRIME-10",
+                "discount": "10% Cashback + Extended 3-Year Free Warranty"
+            }
+        elif income_val < med_income and spending_val < med_spending:
+            return {
+                "name": "🏷️ Budget Shoppers / Low Income, Low Spenders",
+                "tag": "Frugal Economizer",
+                "badge_color": "#64748B",
+                "desc": "Cost-conscious customers motivated by bundle discounts, clearance events, and value pricing.",
+                "ltv": "Moderate (Tier 3)",
+                "channel": "SMS Flash Sales & App Coupon Circulars",
+                "categories": ["Clearance Apparel", "Value Packs", "Everyday Basics"],
+                "coupon": "BUDGET-BOOST-5",
+                "discount": "Buy 1 Get 1 Free on Select Everyday Items"
+            }
+        else:
+            return {
+                "name": "⚖️ Standard / Balanced Customers",
+                "tag": "Steady Regulars",
+                "badge_color": "#3B82F6",
+                "desc": "Balanced income and moderate spending habits. Regular mall patrons who appreciate dependable quality.",
+                "ltv": "Consistent (Tier 2)",
+                "channel": "Seasonal Mall Festivals & Reward Points",
+                "categories": ["Department Stores", "Casual Dining", "Family Entertainment"],
+                "coupon": "REWARDS-PLUS-12",
+                "discount": "12% Off Storewide + Double Loyalty Points"
+            }
     else:
         return {
-            "name": "⚖️ Standard / Balanced Shoppers",
-            "tag": "Steady Regulars",
-            "badge_color": "primary",
-            "desc": "Average income and moderate spending habits. Reliable mall visitors who appreciate consistent service.",
-            "ltv": "Consistent (Tier 2)",
-            "channel": "Email Promotions, Mall Loyalty Cards & Seasonal Festivals",
-            "categories": ["Department Stores", "Casual Dining", "Family Entertainment", "Books & Stationery"],
-            "coupon": "REWARDS-PLUS-12",
-            "discount": "12% Off Storewide + Double Loyalty Reward Points"
+            "name": f"Segment {cluster_idx + 1} Profile",
+            "tag": f"Cluster {cluster_idx + 1}",
+            "badge_color": "#8B5CF6",
+            "desc": f"Customers grouped around centroid ({income_val:.1f}, {spending_val:.1f}).",
+            "ltv": "Calculated (Active)",
+            "channel": "Omnichannel Digital Campaigns",
+            "categories": ["Top Matched Products"],
+            "coupon": f"PROMO-SEG-{cluster_idx + 1}",
+            "discount": "10% Promotional Welcome Offer"
         }
 
 def compute_centroids(X, labels, k):
@@ -111,37 +137,85 @@ def compute_centroids(X, labels, k):
             centroids.append(np.zeros(X.shape[1]))
     return np.array(centroids)
 
-# Precalculate Elbow & Silhouette curves once for instant loading
-@app.route("/api/elbow")
-def api_elbow():
-    X = df_raw[[COL_X, COL_Y]].values
-    k_range = list(range(1, 11))
-    wcss_list = []
-    sil_list = []
-
-    for k in k_range:
-        km = KMeans(n_clusters=k, init="k-means++", random_state=42, n_init=10)
-        km.fit(X)
-        wcss_list.append(float(km.inertia_))
-        if k >= 2:
-            sil_list.append(float(silhouette_score(X, km.labels_)))
-        else:
-            sil_list.append(None)
-
-    return jsonify({
-        "k_range": k_range,
-        "wcss": wcss_list,
-        "silhouette": sil_list,
-        "optimal_k_elbow": 5,
-        "optimal_k_silhouette": int(np.argmax([s for s in sil_list if s is not None]) + 2)
-    })
-
 # ---------------------------------------------------------
-# Main Routes
+# API Endpoints
 # ---------------------------------------------------------
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/api/upload", methods=["POST"])
+def api_upload():
+    """Upload custom CSV dataset."""
+    if "file" not in request.files:
+        return jsonify({"success": False, "error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "error": "Empty filename"}), 400
+
+    try:
+        df = pd.read_csv(file)
+        if len(df) < 5:
+            return jsonify({"success": False, "error": "Dataset must contain at least 5 rows"}), 400
+
+        numeric_cols = get_numeric_columns(df)
+        if len(numeric_cols) < 2:
+            return jsonify({"success": False, "error": "Dataset must have at least 2 numerical columns for clustering"}), 400
+
+        CURRENT_DATASET["df"] = df
+        CURRENT_DATASET["filename"] = file.filename
+        CURRENT_DATASET["is_custom"] = True
+
+        return jsonify({
+            "success": True,
+            "filename": file.filename,
+            "rows": len(df),
+            "columns": df.columns.tolist(),
+            "numeric_columns": numeric_cols,
+            "preview": df.head(5).to_dict(orient="records"),
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/reset_data", methods=["POST"])
+def api_reset_data():
+    """Reset back to default Mall_Customers.csv dataset."""
+    CURRENT_DATASET["df"] = pd.read_csv(DEFAULT_DATASET_PATH)
+    CURRENT_DATASET["filename"] = "Mall_Customers.csv"
+    CURRENT_DATASET["is_custom"] = False
+
+    numeric_cols = get_numeric_columns(CURRENT_DATASET["df"])
+    return jsonify({
+        "success": True,
+        "filename": "Mall_Customers.csv",
+        "rows": len(CURRENT_DATASET["df"]),
+        "columns": CURRENT_DATASET["df"].columns.tolist(),
+        "numeric_columns": numeric_cols,
+    })
+
+@app.route("/api/meta", methods=["GET"])
+def api_meta():
+    """Return dataset metadata and column options."""
+    df = CURRENT_DATASET["df"]
+    numeric_cols = get_numeric_columns(df)
+    gender_col = get_gender_column(df)
+
+    default_x = "Annual Income (k$)" if "Annual Income (k$)" in numeric_cols else numeric_cols[0]
+    default_y = "Spending Score (1-100)" if "Spending Score (1-100)" in numeric_cols else numeric_cols[min(1, len(numeric_cols)-1)]
+    default_z = "Age" if "Age" in numeric_cols else (numeric_cols[2] if len(numeric_cols) > 2 else None)
+
+    return jsonify({
+        "filename": CURRENT_DATASET["filename"],
+        "is_custom": CURRENT_DATASET["is_custom"],
+        "total_rows": len(df),
+        "columns": df.columns.tolist(),
+        "numeric_columns": numeric_cols,
+        "default_x": default_x,
+        "default_y": default_y,
+        "default_z": default_z,
+        "gender_column": gender_col,
+    })
 
 @app.route("/api/cluster", methods=["POST"])
 def api_cluster():
@@ -150,7 +224,21 @@ def api_cluster():
     k = int(req.get("k", 5))
     linkage = req.get("linkage", "ward")
 
-    X = df_raw[[COL_X, COL_Y]].values
+    df = CURRENT_DATASET["df"]
+    numeric_cols = get_numeric_columns(df)
+
+    col_x = req.get("col_x", "Annual Income (k$)")
+    col_y = req.get("col_y", "Spending Score (1-100)")
+    col_z = req.get("col_z", "Age")
+
+    if col_x not in df.columns:
+        col_x = numeric_cols[0]
+    if col_y not in df.columns:
+        col_y = numeric_cols[min(1, len(numeric_cols)-1)]
+    if col_z not in df.columns:
+        col_z = numeric_cols[2] if len(numeric_cols) > 2 else numeric_cols[0]
+
+    X = df[[col_x, col_y]].values
 
     # K-Means
     km = KMeans(n_clusters=k, init="k-means++", random_state=42, n_init=10)
@@ -174,13 +262,13 @@ def api_cluster():
     sil = float(silhouette_score(X, active_labels)) if len(X) > k else 0.0
 
     # Personas
-    centroids_df = pd.DataFrame(active_centroids, columns=[COL_X, COL_Y])
+    centroids_df = pd.DataFrame(active_centroids, columns=[col_x, col_y])
     personas = {}
     for i in range(k):
-        personas[i] = get_cluster_persona(i, centroids_df)
+        personas[i] = get_cluster_persona(i, centroids_df, col_x, col_y)
 
     # Segmented Records
-    records_df = df_raw.copy()
+    records_df = df.copy()
     records_df["KMeans_Cluster"] = km_labels.tolist()
     records_df["Hierarchical_Cluster"] = agg_labels.tolist()
     records_df["Cluster"] = active_labels.tolist()
@@ -191,17 +279,20 @@ def api_cluster():
     crosstab_df = pd.crosstab(km_labels, agg_labels)
     crosstab_matrix = crosstab_df.values.tolist()
 
+    # Gender column check
+    gender_col = get_gender_column(df)
+
     # Radar comparison metrics per cluster
     radar_data = []
     for i in range(k):
         c_pts = records_df[records_df["Cluster"] == i]
-        females = len(c_pts[c_pts[GENDER_COL] == "Female"]) if GENDER_COL else 0
+        females = len(c_pts[c_pts[gender_col].isin(["Female", "F", "female"])]) if gender_col else 0
         radar_data.append({
             "cluster": i,
             "name": personas[i]["name"].split("/")[0].strip(),
-            "avg_salary": float(c_pts[COL_X].mean()),
-            "avg_spending": float(c_pts[COL_Y].mean()),
-            "avg_age": float(c_pts[COL_Z].mean()) if COL_Z in c_pts else 35.0,
+            "avg_x": float(c_pts[col_x].mean()),
+            "avg_y": float(c_pts[col_y].mean()),
+            "avg_z": float(c_pts[col_z].mean()) if col_z in c_pts else 35.0,
             "female_ratio": round((females / len(c_pts) * 100), 1) if len(c_pts) > 0 else 50.0,
             "count": len(c_pts)
         })
@@ -209,10 +300,14 @@ def api_cluster():
     response_data = {
         "k": k,
         "algorithm": algorithm,
-        "total_customers": len(df_raw),
-        "avg_salary": float(df_raw[COL_X].mean()),
-        "avg_spending": float(df_raw[COL_Y].mean()),
-        "avg_age": float(df_raw[COL_Z].mean()) if COL_Z in df_raw else 38.8,
+        "filename": CURRENT_DATASET["filename"],
+        "total_customers": len(df),
+        "col_x": col_x,
+        "col_y": col_y,
+        "col_z": col_z,
+        "avg_x": float(df[col_x].mean()),
+        "avg_y": float(df[col_y].mean()),
+        "avg_z": float(df[col_z].mean()) if col_z in df else 38.8,
         "silhouette": sil,
         "centroids": active_centroids.tolist(),
         "personas": personas,
@@ -225,14 +320,28 @@ def api_cluster():
 @app.route("/api/predict", methods=["POST"])
 def api_predict():
     req = request.get_json() or {}
-    age = float(req.get("age", 30))
-    salary = float(req.get("salary", 60))
-    spending = float(req.get("spending", 50))
+    df = CURRENT_DATASET["df"]
+    numeric_cols = get_numeric_columns(df)
+
+    col_x = req.get("col_x", "Annual Income (k$)")
+    col_y = req.get("col_y", "Spending Score (1-100)")
+    col_z = req.get("col_z", "Age")
+
+    if col_x not in df.columns:
+        col_x = numeric_cols[0]
+    if col_y not in df.columns:
+        col_y = numeric_cols[min(1, len(numeric_cols)-1)]
+    if col_z not in df.columns:
+        col_z = numeric_cols[2] if len(numeric_cols) > 2 else numeric_cols[0]
+
+    val_x = float(req.get("val_x", 60))
+    val_y = float(req.get("val_y", 50))
+    val_z = float(req.get("val_z", 30))
     algorithm = req.get("algorithm", "kmeans")
     k = int(req.get("k", 5))
     linkage = req.get("linkage", "ward")
 
-    X = df_raw[[COL_X, COL_Y]].values
+    X = df[[col_x, col_y]].values
 
     # Fit active model
     if algorithm == "hierarchical":
@@ -245,18 +354,18 @@ def api_predict():
         centroids = km.cluster_centers_
 
     # Predict cluster via nearest centroid
-    new_point = np.array([salary, spending])
+    new_point = np.array([val_x, val_y])
     distances_to_centroids = [np.linalg.norm(new_point - c) for c in centroids]
     predicted_cluster = int(np.argmin(distances_to_centroids))
 
     # Persona Profile
-    centroids_df = pd.DataFrame(centroids, columns=[COL_X, COL_Y])
-    persona_obj = get_cluster_persona(predicted_cluster, centroids_df)
+    centroids_df = pd.DataFrame(centroids, columns=[col_x, col_y])
+    persona_obj = get_cluster_persona(predicted_cluster, centroids_df, col_x, col_y)
 
     # Cross-check Top 5 Nearest Existing Customers
     distances_to_pts = np.linalg.norm(X - new_point, axis=1)
     nearest_idx = np.argsort(distances_to_pts)[:5]
-    nearest_df = df_raw.iloc[nearest_idx].copy()
+    nearest_df = df.iloc[nearest_idx].copy()
     nearest_df["Cluster"] = labels[nearest_idx].tolist()
     nearest_df["distance"] = np.round(distances_to_pts[nearest_idx], 2).tolist()
 
@@ -273,12 +382,59 @@ def api_predict():
         "nearest_customers": nearest_df.to_dict(orient="records"),
     })
 
+@app.route("/api/elbow")
+def api_elbow():
+    df = CURRENT_DATASET["df"]
+    numeric_cols = get_numeric_columns(df)
+    col_x = request.args.get("col_x", numeric_cols[0])
+    col_y = request.args.get("col_y", numeric_cols[min(1, len(numeric_cols)-1)])
+
+    if col_x not in df.columns:
+        col_x = numeric_cols[0]
+    if col_y not in df.columns:
+        col_y = numeric_cols[min(1, len(numeric_cols)-1)]
+
+    X = df[[col_x, col_y]].values
+    k_range = list(range(1, 11))
+    wcss_list = []
+    sil_list = []
+
+    for k in k_range:
+        km = KMeans(n_clusters=k, init="k-means++", random_state=42, n_init=10)
+        km.fit(X)
+        wcss_list.append(float(km.inertia_))
+        if k >= 2:
+            sil_list.append(float(silhouette_score(X, km.labels_)))
+        else:
+            sil_list.append(None)
+
+    valid_sils = [s for s in sil_list if s is not None]
+    optimal_sil_k = int(np.argmax(valid_sils) + 2) if len(valid_sils) > 0 else 5
+
+    return jsonify({
+        "k_range": k_range,
+        "wcss": wcss_list,
+        "silhouette": sil_list,
+        "optimal_k_elbow": 5,
+        "optimal_k_silhouette": optimal_sil_k,
+    })
+
 @app.route("/api/dendrogram")
 def api_dendrogram():
     k = int(request.args.get("k", 5))
     linkage_type = request.args.get("linkage", "ward")
 
-    X = df_raw[[COL_X, COL_Y]].values
+    df = CURRENT_DATASET["df"]
+    numeric_cols = get_numeric_columns(df)
+    col_x = request.args.get("col_x", numeric_cols[0])
+    col_y = request.args.get("col_y", numeric_cols[min(1, len(numeric_cols)-1)])
+
+    if col_x not in df.columns:
+        col_x = numeric_cols[0]
+    if col_y not in df.columns:
+        col_y = numeric_cols[min(1, len(numeric_cols)-1)]
+
+    X = df[[col_x, col_y]].values
     linkage_matrix = sch.linkage(X, method=linkage_type)
 
     last_merges = linkage_matrix[-(k - 1):, 2]
@@ -311,17 +467,26 @@ def api_dendrogram():
 
 @app.route("/export")
 def export_csv():
-    cluster_filter = request.args.get("cluster", "all")
+    df = CURRENT_DATASET["df"]
+    numeric_cols = get_numeric_columns(df)
+    col_x = request.args.get("col_x", numeric_cols[0])
+    col_y = request.args.get("col_y", numeric_cols[min(1, len(numeric_cols)-1)])
     k = int(request.args.get("k", 5))
+    cluster_filter = request.args.get("cluster", "all")
 
-    X = df_raw[[COL_X, COL_Y]].values
+    if col_x not in df.columns:
+        col_x = numeric_cols[0]
+    if col_y not in df.columns:
+        col_y = numeric_cols[min(1, len(numeric_cols)-1)]
+
+    X = df[[col_x, col_y]].values
     km = KMeans(n_clusters=k, init="k-means++", random_state=42, n_init=10)
     km_labels = km.fit_predict(X)
 
     agg = AgglomerativeClustering(n_clusters=k, metric="euclidean", linkage="ward")
     agg_labels = agg.fit_predict(X)
 
-    export_df = df_raw.copy()
+    export_df = df.copy()
     export_df["KMeans_Cluster"] = km_labels
     export_df["Hierarchical_Cluster"] = agg_labels
 
@@ -329,11 +494,11 @@ def export_csv():
         try:
             c_int = int(cluster_filter)
             export_df = export_df[export_df["KMeans_Cluster"] == c_int]
-            filename = f"Mall_Customers_Cluster_{c_int}.csv"
+            filename = f"Customer_Segmentation_Cluster_{c_int}.csv"
         except ValueError:
-            filename = "Mall_Customers_Segmented.csv"
+            filename = "Customer_Segmentation_Results.csv"
     else:
-        filename = "Mall_Customers_Segmented.csv"
+        filename = "Customer_Segmentation_Results.csv"
 
     csv_data = export_df.to_csv(index=False)
     return Response(
@@ -346,5 +511,5 @@ def export_csv():
 # Server Main
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    print("Starting Enhanced Flask Customer Segmentation App on http://127.0.0.1:5000 ...")
+    print("Starting Enterprise Customer Segmentation & Prediction Studio on http://127.0.0.1:5000 ...")
     app.run(host="0.0.0.0", port=5000, debug=True)
