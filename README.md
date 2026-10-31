@@ -1,5 +1,5 @@
 # 🛍️ Customer Segmentation & Prediction Studio (Flask Web App)
-liveDemo - customer-segmentation-prediction-st.vercel.app
+liveDemo -customer-segmentation-prediction-st.vercel.app
 
 An interactive, data-driven Customer Segmentation and Behavioral Analytics web application built with **Flask**, **Scikit-learn**, **SciPy**, and **Plotly.js**, featuring both **K-Means Clustering** and **Hierarchical Clustering (Agglomerative & Dendrogram)**.
 
